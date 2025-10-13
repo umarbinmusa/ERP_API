@@ -9,8 +9,16 @@ schema {
 type User {
   id: ID!
   username: String!
-  role: String! # Either "ADMIN" or "CASHIER"
+  email: String!
+  full_name: String!
+  password: String!
+  role: String!
+  permissions: [String]
+  isActive: Boolean
+  createdAt: String
+  lastLogin: String
 }
+
    type Test {
     id: ID!
     batch_number: String
@@ -28,6 +36,11 @@ type User {
     physical_test: String
     note: String
   }
+    type Order {
+    id: ID!
+    customer: String
+    }
+
     scalar Date
     type Production{
     id: ID!
@@ -53,11 +66,10 @@ type AuthPayload {
 type Query {
   getUsers: [User!]! # Admin Only
   getTests: [Test!]!
-  
 }
 
 type Mutation {
-  signup(username: String!, password: String!, role: String!): AuthPayload!
+  signup(username: String!, email: String!, full_name: String!, password: String!, role: String!): AuthPayload!
   login(username: String!, password: String!): AuthPayload!
    createTest(
       batch_number: String

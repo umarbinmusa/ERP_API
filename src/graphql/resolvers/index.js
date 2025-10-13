@@ -25,14 +25,14 @@ const resolvers = {
   
   
   Mutation: {
-    signup: async (_, { username, password, role }, { models }) => {
+    signup: async (_, { username, password, role, email, full_name }, { models }) => {
       if (!username || !password || !role) {
         throw new AuthenticationError("All fields are required");
       }
       const existingUser = await models.User.findOne({ username });
       if (existingUser) throw new AuthenticationError("Username already taken");
       const hashedPassword = await argon2.hash(password);
-      const user = await models.User.create({ username, password: hashedPassword, role });
+      const user = await models.User.create({ username, email, full_name, password: hashedPassword, role });
       const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET_KEY, { expiresIn: "7d" });
       return { token, user };
     },

@@ -1,34 +1,19 @@
 import mongoose from "mongoose";
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+const { Schema, model } = mongoose;
 
-  full_name: {
-    type: String,
-    required: true,
-    default: function () {
-      return this.username || "Unnamed User";
-    },
+const userSchema = new Schema(
+  {
+    full_name: { type: String, required: true },
+    username: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ["ADMIN", "CONSULTANT", "PATIENT"],
+      default: "PATIENT",
+    }
   },
+  { timestamps: true }
+);
 
-  email: {
-    type: String,
-    required: true,
-    default: function () {
-      return `${this.username || "user"}@example.com`;
-    },
-  },
-
-  role: {
-    type: String,
-    enum: ["ADMIN", "FINANCE", "MANAGER", "LABORATORY", "DIRECTOR"],
-    required: true,
-  },
-
-  permissions: { type: [String], default: [] },
-  isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: String,
-});export default mongoose.model("User", userSchema);
-
-
+export default model("User", userSchema);

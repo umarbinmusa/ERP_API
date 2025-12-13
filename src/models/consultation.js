@@ -1,17 +1,44 @@
 import mongoose from "mongoose";
-const consultationSchema = new mongoose.Schema({
-patient: { type: Schema.Types.ObjectId, ref: 'Patient', required: true },
-practitioner: { type: Schema.Types.ObjectId, ref: 'User' },
-notes: { type: String },
-diagnosis: { type: String },
-prescription: [{
-drug: { type: Schema.Types.ObjectId, ref: 'Drug' },
-dose: { type: String },
-frequency: { type: String },
-duration: { type: String }
-}],
-followUpDate: { type: Date }
-}, { timestamps: true });
+const { Schema, model } = mongoose;
 
+const consultationSchema = new Schema(
+  {
+    patient: {
+      type: Schema.Types.ObjectId,
+      ref: "Patient",
+      required: true
+    },
 
-export default mongoose.model('Consultation', consultationSchema);
+    consultant: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+
+    symptoms: {
+      type: String,
+      required: true
+    },
+
+    diagnosis: {
+      type: String,
+      required: true
+    },
+
+    prescription: [
+      {
+        herbName: String,
+        dosage: String,
+        frequency: String,
+        duration: String
+      }
+    ],
+
+    followUpDate: {
+      type: Date
+    }
+  },
+  { timestamps: true }
+);
+
+export default model("Consultation", consultationSchema);

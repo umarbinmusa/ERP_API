@@ -1,101 +1,121 @@
 import { gql } from "apollo-server-express";
 
 export default gql`
-schema {
-  query: Query
-  mutation: Mutation
-}
-
-type User {
-  id: ID!
-  username: String!
-  email: String!
-  full_name: String!
-  password: String!
-  role: String!
-  permissions: [String]
-  isActive: Boolean
-  createdAt: String
-  lastLogin: String
-}
-
-   type Test {
-    id: ID!
-    batch_number: String
-    sample_id: String
-    date: String
-    product: String
-    ph_level: String
-    tds_level: String
-    chlorine: String
-    turbidity: String
-    conductivity: String
-    temperature: String
-    microbioligy_test: String
-    chemical_test: String
-    physical_test: String
-    note: String
+  schema {
+    query: Query
+    mutation: Mutation
   }
-    type Order {
-    id: ID!
-    customer: String
-    }
 
-    scalar Date
-    type Production{
+  type User {
     id: ID!
-    date: Date!
-    shift: String
-    product: String
-    planed_quantity: String
-    supervisor: String
-    note: String
-    }
-
-     type Product {
+    username: String!
+    email: String
+    full_name: String
+    password: String!
+    role: String!
+    permissions: [String]
+    isActive: Boolean
+    createdAt: String
+    lastLogin: String
+  }
+  type Patient {
     id: ID!
     name: String!
-  }
- 
-type AuthPayload {
-  token: String!
-  user: User!
-}
-
-
-type Query {
-  getUsers: [User!]! # Admin Only
-  getTests: [Test!]!
-}
-
-type Mutation {
-  signup(username: String!, email: String!, full_name: String!, password: String!, role: String!): AuthPayload!
-  login(username: String!, password: String!): AuthPayload!
-   createTest(
-      batch_number: String
-      sample_id: String
-      product: ID!
-      ph_level: String
-      tds_level: String
-      chlorine: String
-      turbidity: String
-      conductivity: String
-      temperature: String
-      microbioligy_test: String
-      chemical_test: String
-      physical_test: String
-      note: String
-    ): Test
-    createProduction(
-    date: Date
-    shift: String
-    product: String
-    planed_quantity: String
-    supervisor: String
-    note: String
-    ): Production
+    age: Int
+    phone: String
+    history: [String]
+    createdAt: Date
   }
 
+  type Drug {
+    id: ID!
+    name: String!
+    description: String
+    unitPrice: Float
+    stock: Int
+    createdAt: Date
+  }
+type Prescription {
+  herbName: String
+  dosage: String
+  frequency: String
+  duration: String
+}
+
+type Consultation {
+  id: ID!
+  patient: Patient
+  consultant: User
+  symptoms: String
+  diagnosis: String
+  prescription: [Prescription]
+  followUpDate: String
+  createdAt: String
+}
+
+input PrescriptionInput {
+  herbName: String
+  dosage: String
+  frequency: String
+  duration: String
+}
+
+  
+
+  
+  type Order {
+    id: ID!
+    customer: String
+  }
+
+  scalar Date
+  
+
+  
+  type AuthPayload {
+    token: String!
+    user: User!
+  }
+
+  type Query {
+    getUsers: [User!]! # Admin Only
    
+  }
 
+  type Mutation {
+    signup(
+      username: String!
+      email: String!
+      full_name: String!
+      password: String!
+      role: String!
+    ): AuthPayload!
+    login(username: String!, password: String!): AuthPayload!
+    
+    
+    
+    addDrug(
+      name: String!
+      description: String
+      unitPrice: Float
+      stock: Int
+    ): Drug
+    updateDrug(
+      id: ID!
+      name: String
+      description: String
+      unitPrice: Float
+      stock: Int
+    ): Drug
+    deleteDrug(id: ID!): Boolean
+     createConsultation(
+    patientId: ID!
+    symptoms: String!
+    diagnosis: String!
+    prescription: [PrescriptionInput]
+    followUpDate: String
+  ): Consultation
+  
+    
+}
 `;

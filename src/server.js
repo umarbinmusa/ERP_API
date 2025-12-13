@@ -6,6 +6,10 @@ import typeDefs from './graphql/schema/index.js';
 import User from './models/user.js'; 
 import Test from './models/test.js'
 import Production from './models/production.js';
+import Drug from './models/drug.js';
+import Order from './models/order.js';
+import Branch from './models/branch.js';
+import Patient from './models/patient.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import jwt from "jsonwebtoken";
@@ -77,7 +81,7 @@ const server = new ApolloServer({
   
     
     return {
-      models: { User, Test, Production  }, // Pass models here
+      models: { User, Test, Production, Drug, Branch, Order, Patient  }, // Pass models here
       user,// If using authentication middleware
     };
   }

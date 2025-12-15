@@ -37,6 +37,16 @@ const resolvers = {
         createdAt: -1
       });
     },
+    myConsultations: async (_, __, { user }) => {
+      requireRole(user, ["PATIENT"]);
+
+      return await Consultation.find({
+        patient: user.id
+      })
+        .populate("consultant")
+        .sort({ createdAt: -1 });
+    },
+
     
   },
 

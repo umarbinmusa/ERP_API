@@ -102,6 +102,7 @@ export default gql`
     getDrugs: [Drug!]!
     getDrug(id: ID!): Drug
     getPatients: [User!]!
+    myConsultations: [Consultation!]!
   }
 
   type Mutation {

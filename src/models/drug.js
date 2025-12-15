@@ -1,10 +1,35 @@
 import mongoose from "mongoose";
 
-const drugSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String },
-  unitPrice: { type: Number, default: 0 },
-  stock: { type: Number, default: 0 }
-}, { timestamps: true });
+const { Schema, model } = mongoose;
 
-export default mongoose.model('Drug', drugSchema);
+const drugSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    category: {
+      type: String
+    },
+    description: {
+      type: String
+    },
+    price: {
+      type: Number,
+      required: true
+    },
+    stock: {
+      type: Number,
+      default: 0
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+
+export default model("Drug", drugSchema);

@@ -30,48 +30,68 @@ export default gql`
   type Drug {
     id: ID!
     name: String!
+    category: String
     description: String
-    unitPrice: Float
-    stock: Int
-    createdAt: Date
+    price: Float!
+    stock: Int!
+    createdBy: User!
+    createdAt: String
+    updatedAt: String
   }
-type Prescription {
-  herbName: String
-  dosage: String
-  frequency: String
-  duration: String
-}
 
-type Consultation {
-  id: ID!
-  patient: Patient
-  consultant: User
-  symptoms: String
-  diagnosis: String
-  prescription: [Prescription]
-  followUpDate: String
-  createdAt: String
-}
+  type Prescription {
+    herbName: String
+    dosage: String
+    frequency: String
+    duration: String
+  }
 
-input PrescriptionInput {
-  herbName: String
-  dosage: String
-  frequency: String
-  duration: String
-}
+  type Consultation {
+    id: ID!
+    patient: Patient
+    consultant: User
+    symptoms: String
+    diagnosis: String
+    prescription: [Prescription]
+    followUpDate: String
+    createdAt: String
+  }
 
-  
+  input PrescriptionInput {
+    herbName: String
+    dosage: String
+    frequency: String
+    duration: String
+  }
+  input CreateDrugInput {
+    name: String!
+    category: String
+    description: String
+    price: Float!
+    stock: Int
+  }
+  input BuyDrugInput {
+    drugId: ID!
+    quantity: Int!
+  }
 
-  
+  type DrugPurchase {
+    id: ID!
+    user: User!
+    drug: Drug!
+    quantity: Int!
+    unitPrice: Float!
+    totalPrice: Float!
+    createdAt: String
+  }
+
   type Order {
     id: ID!
     customer: String
   }
 
   scalar Date
-  
 
-  
   type AuthPayload {
     token: String!
     user: User!
@@ -79,7 +99,9 @@ input PrescriptionInput {
 
   type Query {
     getUsers: [User!]! # Admin Only
-   
+    getDrugs: [Drug!]!
+    getDrug(id: ID!): Drug
+    getPatients: [User!]!
   }
 
   type Mutation {
@@ -91,31 +113,15 @@ input PrescriptionInput {
       role: String!
     ): AuthPayload!
     login(username: String!, password: String!): AuthPayload!
-    
-    
-    
-    addDrug(
-      name: String!
-      description: String
-      unitPrice: Float
-      stock: Int
-    ): Drug
-    updateDrug(
-      id: ID!
-      name: String
-      description: String
-      unitPrice: Float
-      stock: Int
-    ): Drug
-    deleteDrug(id: ID!): Boolean
-     createConsultation(
-    patientId: ID!
-    symptoms: String!
-    diagnosis: String!
-    prescription: [PrescriptionInput]
-    followUpDate: String
-  ): Consultation
-  
-    
-}
+
+    createConsultation(
+      patientId: ID!
+      symptoms: String!
+      diagnosis: String!
+      prescription: [PrescriptionInput]
+      followUpDate: String
+    ): Consultation
+    createDrug(input: CreateDrugInput!): Drug!
+    buyDrug(input: BuyDrugInput!): DrugPurchase!
+  }
 `;

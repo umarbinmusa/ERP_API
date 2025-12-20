@@ -34,7 +34,7 @@ export default gql`
     description: String
     price: Float!
     stock: Int!
-    createdBy: User!
+    createdBy: User
     createdAt: String
     updatedAt: String
   }
@@ -56,6 +56,30 @@ export default gql`
     followUpDate: String
     createdAt: String
   }
+    type Appointment {
+  id: ID!
+  patient: User!
+  consultant: User!
+  reason: String!
+  appointmentDate: String!
+  status: String!
+  createdAt: String!
+}
+
+input CreateAppointmentInput {
+  consultantId: ID!
+  reason: String!
+  appointmentDate: String!
+}
+  
+
+
+ 
+
+
+
+  
+
 
   input PrescriptionInput {
     herbName: String
@@ -63,6 +87,7 @@ export default gql`
     frequency: String
     duration: String
   }
+
   input CreateDrugInput {
     name: String!
     category: String
@@ -74,6 +99,11 @@ export default gql`
     drugId: ID!
     quantity: Int!
   }
+  input UpdateAppointmentStatusInput {
+  appointmentId: ID!
+  status: String!
+}
+
 
   type DrugPurchase {
     id: ID!
@@ -103,6 +133,13 @@ export default gql`
     getDrug(id: ID!): Drug
     getPatients: [User!]!
     myConsultations: [Consultation!]!
+     consultationById(id: ID!): Consultation
+  myPatients: [User!]!
+   getMyAppointments: [Appointment!]!
+  getConsultations: [Consultation!]!
+   getConsultantAppointments: [Appointment]
+   getAppointments: [Appointment!]!
+   myAppointments: [Appointment!]!
   }
 
   type Mutation {
@@ -114,6 +151,10 @@ export default gql`
       role: String!
     ): AuthPayload!
     login(username: String!, password: String!): AuthPayload!
+    createAppointment(input: CreateAppointmentInput!): Appointment!
+    updateAppointmentStatus(input: UpdateAppointmentStatusInput!): Appointment
+
+
 
     createConsultation(
       patientId: ID!

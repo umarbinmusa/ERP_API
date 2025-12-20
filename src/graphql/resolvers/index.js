@@ -10,6 +10,7 @@ import User from "../../models/user.js";
 import Consultation from "../../models/consultation.js";
 import Drug from "../../models/drug.js";
 import DrugPurchase from "../../models/drugPurchase.js";
+import Appointment from "../../models/appointment.js";
 
 const CONSULTANT_RESTRICTED = false; 
 
@@ -27,9 +28,27 @@ const resolvers = {
       }
       return await models.User.find();
     },
-    getDrugs: async () => {
-      return await Drug.find().sort({ createdAt: -1 });
-    },
+   getDrugs: async () => {
+  const drugs = await Drug.find().sort({ createdAt: -1 }).populate("createdBy");
+  
+  // Map each drug to convert IDs to string
+  return drugs.map(drug => ({
+    id: drug._id.toString(),
+    name: drug.name,
+    category: drug.category,
+    description: drug.description,
+    price: drug.price,
+    stock: drug.stock,
+    createdBy: drug.createdBy
+      ? {
+          id: drug.createdBy._id.toString(),
+          full_name: drug.createdBy.full_name
+        }
+      : null
+  }));
+},
+
+
     getPatients: async (_, __, { user }) => {
       requireRole(user, ["ADMIN", "CONSULTANT"]);
 
@@ -46,8 +65,83 @@ const resolvers = {
         .populate("consultant")
         .sort({ createdAt: -1 });
     },
-
+   getConsultations: async (_, __, { models }) => {
+      return await models.Consultation.find().sort({ createdAt: -1 });
+    },
     
+
+  myConsultations: async (_, __, { user }) => {
+    requireRole(user, ["CONSULTANT"]);
+
+    return await Consultation.find({ consultant: user.id })
+      .populate("patient", "full_name email")
+      .populate("consultant", "full_name role")
+      .sort({ createdAt: -1 });
+  },
+   getConsultantAppointments: async (_, __, { user }) => {
+      requireRole(user, ["CONSULTANT"]);
+
+      return await Appointment.find({ consultant: user.id })
+        .populate("patient", "full_name email")
+        .sort({ createdAt: -1 });
+    },
+  
+
+  /**
+   * CONSULTANT: Get a single consultation
+   */
+  consultationById: async (_, { id }, { user }) => {
+    requireRole(user, ["CONSULTANT"]);
+
+    const consultation = await Consultation.findById(id)
+      .populate("patient", "full_name email")
+      .populate("consultant", "full_name role");
+
+    if (!consultation) {
+      throw new Error("Consultation not found");
+    }
+
+    if (consultation.consultant._id.toString() !== user.id) {
+      throw new Error("Access denied");
+    }
+
+    return consultation;
+  },
+
+  /**
+   * CONSULTANT: Get my patients (distinct)
+   */
+  myPatients: async (_, __, { user }) => {
+    requireRole(user, ["CONSULTANT"]);
+
+    const consultations = await Consultation.find({
+      consultant: user.id,
+    }).populate("patient");
+
+    const patientsMap = new Map();
+
+    consultations.forEach((c) => {
+      if (c.patient) {
+        patientsMap.set(c.patient._id.toString(), c.patient);
+      }
+    });
+
+    return Array.from(patientsMap.values());
+  },
+  getAppointments: async (_, __, { models, user }) => {
+  requireRole(user, ["CONSULTANT"]);
+
+  return await models.Appointment.find()
+  },
+
+  myAppointments: async (_, __, { user, models }) => {
+  if (!user) throw new Error("Not authenticated");
+
+  return await models.Appointment.find({ patient: user.id }).sort({ createdAt: -1 });
+}
+
+
+  
   },
 
   Mutation: {
@@ -229,9 +323,61 @@ const resolvers = {
       await purchase.populate("drug", "name price");
 
       return purchase;
-    }
+    },
+
+
+    createAppointment: async (_, { input }, { user }) => {
+      requireRole(user, ["PATIENT"]);
+
+      const { consultantId, reason, appointmentDate } = input;
+
+      const appointment = new Appointment({
+        patient: user.id,
+        consultant: consultantId,
+        reason,
+        appointmentDate
+      });
+
+      await appointment.save();
+
+      return appointment.populate(
+        "patient consultant",
+        "full_name email role"
+      );
   
   },
+   
+    updateAppointmentStatus: async (_, { input }, { user }) => {
+      requireRole(user, ["CONSULTANT"]);
+
+      const { appointmentId, status } = input;
+
+      if (!["APPROVED", "REJECTED"].includes(status)) {
+        throw new Error("Invalid status");
+      }
+
+      const appointment = await Appointment.findById(appointmentId);
+
+      if (!appointment) {
+        throw new Error("Appointment not found");
+      }
+
+      // Consultant can only update their own appointments
+      if (appointment.consultant.toString() !== user.id) {
+        throw new AuthenticationError("Access denied");
+      }
+
+      appointment.status = status;
+      await appointment.save();
+
+      await appointment.populate("patient", "full_name email");
+      await appointment.populate("consultant", "full_name email");
+
+      return appointment;
+    }
+  }
+
+
 };
 
 export default resolvers;

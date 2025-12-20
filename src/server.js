@@ -11,6 +11,8 @@ import Order from './models/order.js';
 import Branch from './models/branch.js';
 import Patient from './models/patient.js';
 import Drugpurchase from './models/drugPurchase.js';
+import Consultation from './models/consultation.js';
+import Appointment from './models/appointment.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import jwt from "jsonwebtoken";
@@ -82,7 +84,7 @@ const server = new ApolloServer({
   
     
     return {
-      models: { User, Test, Production, Drug, Branch, Order, Patient, Drugpurchase  }, // Pass models here
+      models: { User, Test, Production, Drug, Branch, Order, Patient, Drugpurchase, Consultation, Appointment  }, // Pass models here
       user,// If using authentication middleware
     };
   }

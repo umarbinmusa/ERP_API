@@ -7,7 +7,9 @@ import Branch from './branch';
 import Patient from './patient';
 import Order from './order';Drug
 import DrugPurchase from './drugPurchase'; 
+import Consultation from './consultation';
+import Appointment from './appointment';
 
-const models = { User, Test, Production, Drug, Branch, Patient, Order ,DrugPurchase }; 
+const models = { User, Test, Production, Drug, Branch, Patient, Order ,DrugPurchase, Consultation, Appointment }; 
 
 export default models;

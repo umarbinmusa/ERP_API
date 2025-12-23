@@ -87,26 +87,6 @@ const resolvers = {
     },
   
 
-  /**
-   * CONSULTANT: Get a single consultation
-   */
-  consultationById: async (_, { id }, { user }) => {
-    requireRole(user, ["CONSULTANT"]);
-
-    const consultation = await Consultation.findById(id)
-      .populate("patient", "full_name email")
-      .populate("consultant", "full_name role");
-
-    if (!consultation) {
-      throw new Error("Consultation not found");
-    }
-
-    if (consultation.consultant._id.toString() !== user.id) {
-      throw new Error("Access denied");
-    }
-
-    return consultation;
-  },
 
   /**
    * CONSULTANT: Get my patients (distinct)
@@ -138,7 +118,78 @@ const resolvers = {
   if (!user) throw new Error("Not authenticated");
 
   return await models.Appointment.find({ patient: user.id }).sort({ createdAt: -1 });
-}
+},
+
+
+
+   myDrugPurchaseHistory: async (_, __, { user }) => {
+      if (!user || user.role !== "PATIENT") {
+        throw new Error("Access denied");
+      }
+
+      return DrugPurchase.find({ user: user.id })
+        .populate("drug", "name price")
+        .sort({ createdAt: -1 });
+    },
+
+    // 🔹 SINGLE RECEIPT
+    drugPurchaseReceipt: async (_, { id }, { user }) => {
+      if (!user) throw new Error("Unauthorized");
+
+      const purchase = await DrugPurchase.findById(id)
+        .populate("drug", "name price");
+
+      if (!purchase) throw new Error("Receipt not found");
+
+      if (purchase.user.toString() !== user.id) {
+        throw new Error("Access denied");
+      }
+
+      return purchase;
+    },
+    
+  // ================= PATIENT =================
+  myConsultations: async (_, __, { user }) => {
+    requireRole(user, ["PATIENT"]);
+
+    return await Consultation.find({ patient: user.id })
+      .populate("patient", "full_name email role")
+      .populate("consultant", "full_name role")
+      .sort({ createdAt: -1 });
+  },
+
+  // ================= CONSULTANT =================
+  consultationsForConsultant: async (_, __, { user }) => {
+    requireRole(user, ["CONSULTANT"]);
+
+    return await Consultation.find({ consultant: user.id })
+      .populate("patient", "full_name email role")
+      .populate("consultant", "full_name role")
+      .sort({ createdAt: -1 });
+  },
+
+  // ================= ADMIN =================
+  allConsultations: async (_, __, { user }) => {
+    requireRole(user, ["ADMIN"]);
+
+    return await Consultation.find()
+      .populate("patient", "full_name email role")
+      .populate("consultant", "full_name role")
+      .sort({ createdAt: -1 });
+  },
+  pendingAppointments: async (_, __, { user }) => {
+  requireRole(user, ["ADMIN"]);
+
+  return Appointment.find({ status: "PENDING" })
+    .populate("patient", "full_name email")
+    .sort({ createdAt: -1 });
+},
+
+
+
+
+
+
 
 
   
@@ -374,7 +425,55 @@ const resolvers = {
       await appointment.populate("consultant", "full_name email");
 
       return appointment;
-    }
+    }, 
+    approveAndAssignAppointment: async (
+  _,
+  { input },
+  { user }
+) => {
+  requireRole(user, ["ADMIN"]);
+
+  const { appointmentId, consultantId } = input;
+
+  // Validate IDs
+  if (
+    !mongoose.Types.ObjectId.isValid(appointmentId) ||
+    !mongoose.Types.ObjectId.isValid(consultantId)
+  ) {
+    throw new Error("Invalid ID");
+  }
+
+  const appointment = await Appointment.findById(appointmentId);
+
+  if (!appointment) {
+    throw new Error("Appointment not found");
+  }
+
+  if (appointment.status !== "PENDING") {
+    throw new Error("Appointment already processed");
+  }
+
+  // Validate consultant
+  const consultant = await User.findOne({
+    _id: consultantId,
+    role: "CONSULTANT"
+  });
+
+  if (!consultant) {
+    throw new Error("Consultant not found");
+  }
+
+  appointment.status = "APPROVED";
+  appointment.consultant = consultantId;
+
+  await appointment.save();
+
+  await appointment.populate("patient", "full_name email");
+  await appointment.populate("consultant", "full_name email");
+
+  return appointment;
+}
+
   }
 
 

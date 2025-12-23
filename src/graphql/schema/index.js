@@ -48,7 +48,7 @@ export default gql`
 
   type Consultation {
     id: ID!
-    patient: Patient
+    patient: User
     consultant: User
     symptoms: String
     diagnosis: String
@@ -71,13 +71,6 @@ input CreateAppointmentInput {
   reason: String!
   appointmentDate: String!
 }
-  
-
-
- 
-
-
-
   
 
 
@@ -127,19 +120,28 @@ input CreateAppointmentInput {
     user: User!
   }
 
+  input ApproveAndAssignAppointmentInput {
+  appointmentId: ID!
+  consultantId: ID!
+}
+
   type Query {
     getUsers: [User!]! # Admin Only
     getDrugs: [Drug!]!
     getDrug(id: ID!): Drug
     getPatients: [User!]!
-    myConsultations: [Consultation!]!
-     consultationById(id: ID!): Consultation
-  myPatients: [User!]!
+    myPatients: [User!]!
    getMyAppointments: [Appointment!]!
   getConsultations: [Consultation!]!
    getConsultantAppointments: [Appointment]
    getAppointments: [Appointment!]!
    myAppointments: [Appointment!]!
+   myDrugPurchaseHistory: [DrugPurchase!]!
+  drugPurchaseReceipt(id: ID!): DrugPurchase!
+  myConsultations: [Consultation!]!
+  consultationsForConsultant: [Consultation!]!
+  allConsultations: [Consultation!]!
+   pendingAppointments: [Appointment!]!
   }
 
   type Mutation {
@@ -153,6 +155,9 @@ input CreateAppointmentInput {
     login(username: String!, password: String!): AuthPayload!
     createAppointment(input: CreateAppointmentInput!): Appointment!
     updateAppointmentStatus(input: UpdateAppointmentStatusInput!): Appointment
+    approveAndAssignAppointment(
+    input: ApproveAndAssignAppointmentInput!
+  ): Appointment!
 
 
 

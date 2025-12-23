@@ -5,7 +5,7 @@ const consultationSchema = new Schema(
   {
     patient: {
       type: Schema.Types.ObjectId,
-      ref: "Patient",
+      ref: "User",
       required: true
     },
 

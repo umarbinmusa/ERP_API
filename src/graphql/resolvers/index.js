@@ -114,10 +114,19 @@ const resolvers = {
   return await models.Appointment.find()
   },
 
-  myAppointments: async (_, __, { user, models }) => {
-  if (!user) throw new Error("Not authenticated");
+  myAppointments: async (_, __, { user }) => {
+  requireRole(user, ["PATIENT"]);
 
-  return await models.Appointment.find({ patient: user.id }).sort({ createdAt: -1 });
+  console.log(" Fetching appointments for patient:", user.id);
+
+  const appointments = await Appointment.find({
+    patient: user.id
+  })
+    .populate("patient", "full_name email role")
+    .populate("consultant", "full_name email role")
+    .sort({ createdAt: -1 });
+
+  return appointments;
 },
 
 
@@ -167,22 +176,40 @@ const resolvers = {
       .populate("consultant", "full_name role")
       .sort({ createdAt: -1 });
   },
+  allConsultations: async (_, __, { user }) => {
+  requireRole(user, ["ADMIN"]);
+
+  return Consultation.find()
+    .populate("patient", "full_name email")
+    .populate("consultant", "full_name email")
+    .sort({ createdAt: -1 });
+},
+
 
   // ================= ADMIN =================
-  allConsultations: async (_, __, { user }) => {
-    requireRole(user, ["ADMIN"]);
+  allAppointments: async () => {
+  return Appointment.find()
+    .populate("patient", "full_name email")
+    .populate("consultant", "full_name email")
+    .sort({ createdAt: -1 });
+},
 
-    return await Consultation.find()
-      .populate("patient", "full_name email role")
-      .populate("consultant", "full_name role")
-      .sort({ createdAt: -1 });
-  },
   pendingAppointments: async (_, __, { user }) => {
   requireRole(user, ["ADMIN"]);
 
   return Appointment.find({ status: "PENDING" })
     .populate("patient", "full_name email")
     .sort({ createdAt: -1 });
+},
+consultantAppointments: async (_, __, { user }) => {
+  requireRole(user, ["CONSULTANT"]);
+
+  return Appointment.find({
+    consultant: user.id
+  })
+    .populate("patient", "full_name email")
+    .populate("consultant", "full_name email")
+    .sort({ appointmentDate: 1 });
 },
 
 
@@ -386,7 +413,7 @@ const resolvers = {
         patient: user.id,
         consultant: consultantId,
         reason,
-        appointmentDate
+        appointmentDate: new Date(date)
       });
 
       await appointment.save();

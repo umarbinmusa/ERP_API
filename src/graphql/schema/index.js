@@ -56,7 +56,7 @@ export default gql`
     followUpDate: String
     createdAt: String
   }
-    type Appointment {
+  type Appointment {
   id: ID!
   patient: User!
   consultant: User!
@@ -64,6 +64,11 @@ export default gql`
   appointmentDate: String!
   status: String!
   createdAt: String!
+}
+  enum AppointmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 input CreateAppointmentInput {
@@ -142,6 +147,8 @@ input CreateAppointmentInput {
   consultationsForConsultant: [Consultation!]!
   allConsultations: [Consultation!]!
    pendingAppointments: [Appointment!]!
+   allAppointments: [Appointment]
+   consultantAppointments: [Appointment]
   }
 
   type Mutation {

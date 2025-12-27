@@ -16,11 +16,19 @@ const CONSULTANT_RESTRICTED = false;
 
 
 
+
 dotenv.config();
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 const resolvers = {
+  Appointment: {
+  appointmentDate: (parent) => {
+    if (!parent.appointmentDate) return null;
+    return parent.appointmentDate.toISOString();
+  }
+},
+
   Query: {
     getUsers: async (_, __, { models, user }) => {
       if (!user || user.role !== "ADMIN") {
@@ -115,19 +123,19 @@ const resolvers = {
   },
 
   myAppointments: async (_, __, { user }) => {
-  requireRole(user, ["PATIENT"]);
-
-  console.log(" Fetching appointments for patient:", user.id);
-
-  const appointments = await Appointment.find({
-    patient: user.id
-  })
-    .populate("patient", "full_name email role")
-    .populate("consultant", "full_name email role")
-    .sort({ createdAt: -1 });
-
-  return appointments;
+  if (user.role === "PATIENT") {
+    return await Appointment.find({ patient: user.id })
+      .populate("patient", "full_name email")
+      .populate("consultant", "full_name email");
+  } else if (user.role === "ADMIN") {
+    return await Appointment.find()
+      .populate("patient", "full_name email")
+      .populate("consultant", "full_name email");
+  } else {
+    throw new AuthenticationError("Access denied");
+  }
 },
+
 
 
 
@@ -405,25 +413,47 @@ consultantAppointments: async (_, __, { user }) => {
 
 
     createAppointment: async (_, { input }, { user }) => {
-      requireRole(user, ["PATIENT"]);
+  requireRole(user, ["PATIENT"]);
 
-      const { consultantId, reason, appointmentDate } = input;
+  const { consultantId, reason, appointmentDate } = input;
 
-      const appointment = new Appointment({
-        patient: user.id,
-        consultant: consultantId,
-        reason,
-        appointmentDate: new Date(date)
-      });
+  if (!appointmentDate) {
+    throw new Error("Appointment date is required");
+  }
 
-      await appointment.save();
+  let parsedDate;
 
-      return appointment.populate(
-        "patient consultant",
-        "full_name email role"
-      );
-  
-  },
+  // ✅ Case 1: timestamp string or number (e.g. "1766188800000")
+  if (/^\d+$/.test(String(appointmentDate))) {
+    parsedDate = new Date(Number(appointmentDate));
+  }
+  // ✅ Case 2: ISO / normal date string (e.g. "2025-12-20")
+  else {
+    parsedDate = new Date(appointmentDate);
+  }
+
+  // ❌ Invalid date check
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error("Invalid appointment date format");
+  }
+
+  const appointment = new Appointment({
+    patient: user.id,
+    consultant: consultantId || null, // admin can assign later
+    reason,
+    appointmentDate: parsedDate,
+    status: "PENDING"
+  });
+
+  await appointment.save();
+
+  return appointment.populate(
+    "patient consultant",
+    "full_name email role"
+  );
+},
+
+
    
     updateAppointmentStatus: async (_, { input }, { user }) => {
       requireRole(user, ["CONSULTANT"]);
